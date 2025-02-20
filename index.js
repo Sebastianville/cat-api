@@ -13,11 +13,24 @@ const getFavouritesBtn = document.getElementById("getFavouritesBtn");
 // Step 0: Store your API key here for reference and easy access.
 const API_KEY = "live_Z7NyeMP6mOji4n2Yc8H6WkVuqf1cHCa6V2c7YTfWdtvBTHhLxKqcTLgfIONMyzhU";
 
-//interceptors acts like a middle person and will intercept the request and do something 
-axios.interceptors.request.use(config => {
-    console.log(new Date())
-    return config 
-})
+//Set Axios defaults
+axios.defaults.baseURL = "https://api.thecatapi.com/v1";
+axios.defaults.headers.common["x-api-key"] = API_KEY;
+
+
+//!interceptors acts like a middle person and will intercept the request and do something 
+// axios.interceptors.request.use(config => {
+//     console.log(new Date())
+//     return config 
+// })
+
+axios.interceptors.request.use((config) => {
+    console.log("Request started:", config.url);
+    config.metadata = { startTime: new Date() };
+    document.body.style.cursor = "progress"; 
+    progressBar.style.width = "0%"; 
+    return config;
+});
 
 /**
  * 1. Create an async function "initialLoad" that does the following:
@@ -30,13 +43,14 @@ axios.interceptors.request.use(config => {
 
 async function initialLoad () {
     try {
-        const res = await fetch("https://api.thecatapi.com/v1/breeds", {
-            headers: {
-                'x-api-key': API_KEY
-              }
+        const res = await axios.get("/breeds", {
+            // headers: {
+            //     'x-api-key': API_KEY
+            //   }
         })
 
-        const breeds = await res.json()
+        // const breeds = await res.json()
+        const breeds = res.data
 
         //* create new options for each of the breeds by using forEach method 
         breeds.forEach(breed => {
@@ -109,20 +123,17 @@ breedSelect.addEventListener("change", async (e) => {
 
     try {
         //cache the breed images
-        const response = await fetch (`https://api.thecatapi.com/v1/images/search?breed_ids=${breedId}&limit=5`, {
-            headers: { "x-api-key": API_KEY }
-        })
+        const response = await axios.get(`/images/search?breed_ids=${breedId}&limit=5`)
         //we are storing the images that are returning from our res 
-        const images = await response.json();
+        const images = response.data;
         console.log(images)
 
         //each selectoin should clear, re-populate and restart the caoursel. in order to do this we need to clear() and add each image to the image url. This part we need a for each method 
         Carousel.clear()
 
-        // images.forEach(image => Carousel.add(image.url))
-        //* I asked chatGPT for help in this part. I was getting confuse. I still am a little bit. 
+        // the carousel is making these images
         images.forEach(image => {
-            const carouselItem = Carousel.createCarouselItem(image.url, image.breeds[0]?.name || "Cat Image", image.id);
+            const carouselItem = Carousel.createCarouselItem(image.url|| "Cat Image", image.id);
             Carousel.appendCarousel(carouselItem);
         });
         
@@ -221,9 +232,20 @@ function updateProgress(event) {
  *   you delete that favourite using the API, giving this function "toggle" functionality.
  * - You can call this function by clicking on the heart at the top right of any image.
  */
-export async function favourite(imgId) {
 
-}
+//! Colton said not to worry about steps 8 and 9. It deals with post 
+// export async function favourite(imgId) {
+//     try {
+//         const res = await axios.post('/favourites', {
+//             image_id: imgId,
+//         })
+//         console.log(res.data)
+
+//     } catch (error) {
+//         console.error(error)
+//     }
+
+// }
 
 /**
  * 9. Test your favourite() function by creating a getFavourites() function.
